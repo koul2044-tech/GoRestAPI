@@ -36,3 +36,14 @@ def test_create_user(api_headers):
 
     delete_after_test = requests.delete(url_get, headers=api_headers)
     assert delete_after_test.status_code == 204
+
+def test_create_user_without_token():
+    payload = {
+        "name": "Иван",
+        "gender": "male",
+        "email": f"user_{int(time.time())}@test.com",
+        "status": "active"
+    }
+    url = "https://gorest.co.in/public/v2/users"
+    post_response = requests.post(url, json=payload)
+    assert post_response.status_code == 401
