@@ -12,6 +12,8 @@ def test_create_user(api_headers):
     post_response = requests.post(url, json=payload, headers=api_headers)
     assert post_response.status_code == 201
     user_id = post_response.json()["id"]
+
+
     url_get = f"https://gorest.co.in/public/v2/users/{user_id}"
     get_response = requests.get(url_get, headers=api_headers)
     assert get_response.status_code == 200
@@ -24,5 +26,13 @@ def test_create_user(api_headers):
     assert user_data["email"] == payload["email"], f"email ожидали {payload['email']}, получили {user_data['email']}"
     assert "status" in user_data, f"В ответе нет поля status: {user_data}"
     assert user_data["status"] == payload["status"], f"status ожидали {payload['status']}, получили {user_data['status']}"
+
+    patch_payload = {"name": "Иван Измененный"}
+    patch_response = requests.patch(url_get,json = patch_payload, headers=api_headers)
+    patch_data = patch_response.json()
+    assert patch_response.status_code == 200
+    assert "name" in patch_data, f"В ответе нет поля name: {patch_data}"
+    assert patch_data["name"] == patch_payload["name"], f"name ожидали {patch_payload['name']}, получили {patch_data['name']}"
+
     delete_after_test = requests.delete(url_get, headers=api_headers)
     assert delete_after_test.status_code == 204
