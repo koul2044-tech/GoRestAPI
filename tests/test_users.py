@@ -1,3 +1,5 @@
+from multiprocessing.reduction import duplicate
+
 import requests
 import time
 
@@ -47,3 +49,31 @@ def test_create_user_without_token():
     url = "https://gorest.co.in/public/v2/users"
     post_response = requests.post(url, json=payload)
     assert post_response.status_code == 401
+
+
+def test_create_user_with_using_email(api_headers):
+    payload = {
+        "name": "Иван",
+        "gender": "male",
+        "email": f"user_{int(time.time())}@test.com",
+        "status": "active"
+    }
+    url = "https://gorest.co.in/public/v2/users"
+    post_response = requests.post(url, json=payload, headers=api_headers)
+    user_id = post_response.json()["id"]
+    assert post_response.status_code == 201
+
+    duplicate_email = requests.post(url, json=payload, headers=api_headers)
+    assert duplicate_email.status_code == 422
+
+    delete_url = f"https://gorest.co.in/public/v2/users/{user_id}"
+    delete_after_test = requests.delete(delete_url, headers=api_headers)
+    assert delete_after_test.status_code == 204
+
+
+def test_nonexistent_user(api_headers):
+    user_id = "fake"
+    get_url = f"https://gorest.co.in/public/v2/users/{user_id}"
+    get_response = requests.get(get_url, headers=api_headers)
+    assert get_response.status_code == 404
+
