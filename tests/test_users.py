@@ -1,5 +1,6 @@
 import requests
 import time
+import pytest
 
 def test_get_user(api_headers, create_user):
     user_id = create_user["id"]
@@ -68,3 +69,18 @@ def test_nonexistent_user(api_headers):
     get_response = requests.get(get_url, headers=api_headers)
     assert get_response.status_code == 404
 
+
+@pytest.mark.parametrize("field, invalid_value", [("name", ""), ("gender", "unknown"),
+("email", "not-an-email"), ("status", "deleted")])
+def test_create_user_invalid_data(api_headers,field, invalid_value):
+    payload = {
+        "name": "Иван",
+        "gender": "male",
+        "email": f"user_{int(time.time())}@test.com",
+        "status": "active",
+        field: invalid_value}
+    url = "https://gorest.co.in/public/v2/users"
+    post_response = requests.post(url, json=payload, headers=api_headers)
+    assert post_response.status_code == 422
+    errors = post_response.json()
+    assert errors[0]["field"] == field, f"Ожидали ошибку по полю {field}, получили {errors}"
