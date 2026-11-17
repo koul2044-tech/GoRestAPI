@@ -1,10 +1,11 @@
 import requests
 import time
 import pytest
+from config import BASE_URL
 
 def test_get_user(api_headers, create_user):
     user_id = create_user["id"]
-    url = f"https://gorest.co.in/public/v2/users/{user_id}"
+    url = f"{BASE_URL}/users/{user_id}"
     get_response = requests.get(url, headers=api_headers)
     assert get_response.status_code == 200
     user_data = get_response.json()
@@ -23,7 +24,7 @@ def test_get_user(api_headers, create_user):
 
 def test_patch_user(api_headers, create_user):
     user_id = create_user["id"]
-    url = f"https://gorest.co.in/public/v2/users/{user_id}"
+    url = f"{BASE_URL}/users/{user_id}"
     patch_payload = {"name": "Иван Измененный"}
     patch_response = requests.patch(url,json = patch_payload, headers=api_headers)
     assert patch_response.status_code == 200
@@ -38,7 +39,7 @@ def test_create_user_without_token():
         "email": f"user_{int(time.time())}@test.com",
         "status": "active"
     }
-    url = "https://gorest.co.in/public/v2/users"
+    url = f"{BASE_URL}/users"
     post_response = requests.post(url, json=payload)
     assert post_response.status_code == 401
 
@@ -50,7 +51,7 @@ def test_create_user_with_using_email(api_headers):
         "email": f"user_{int(time.time())}@test.com",
         "status": "active"
     }
-    url = "https://gorest.co.in/public/v2/users"
+    url = f"{BASE_URL}/users"
     post_response = requests.post(url, json=payload, headers=api_headers)
     user_id = post_response.json()["id"]
     assert post_response.status_code == 201
@@ -58,14 +59,14 @@ def test_create_user_with_using_email(api_headers):
     duplicate_email = requests.post(url, json=payload, headers=api_headers)
     assert duplicate_email.status_code == 422
 
-    delete_url = f"https://gorest.co.in/public/v2/users/{user_id}"
+    delete_url = f"{BASE_URL}/users/{user_id}"
     delete_after_test = requests.delete(delete_url, headers=api_headers)
     assert delete_after_test.status_code == 204
 
 
 def test_nonexistent_user(api_headers):
     user_id = "fake"
-    get_url = f"https://gorest.co.in/public/v2/users/{user_id}"
+    get_url = f"{BASE_URL}/users/{user_id}"
     get_response = requests.get(get_url, headers=api_headers)
     assert get_response.status_code == 404
 
@@ -79,7 +80,7 @@ def test_create_user_invalid_data(api_headers,field, invalid_value):
         "email": f"user_{int(time.time())}@test.com",
         "status": "active",
         field: invalid_value}
-    url = "https://gorest.co.in/public/v2/users"
+    url = f"{BASE_URL}/users"
     post_response = requests.post(url, json=payload, headers=api_headers)
     assert post_response.status_code == 422
     errors = post_response.json()
