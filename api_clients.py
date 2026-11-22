@@ -19,3 +19,7 @@ class UsersClient:
     def delete_user_by_id(self,user_id):
         url = f"{self.base_url}/{user_id}"
         return requests.delete(url,headers=self.headers)
+
+    def patch_user_by_id(self,user_id,payload):
+        url = f"{self.base_url}/{user_id}"
+        return requests.patch(url,json=payload,headers=self.headers)

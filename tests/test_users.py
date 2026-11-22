@@ -3,10 +3,9 @@ import time
 import pytest
 from config import BASE_URL
 
-def test_get_user(api_headers, create_user):
+def test_get_user(users_client, create_user):
     user_id = create_user["id"]
-    url = f"{BASE_URL}/users/{user_id}"
-    get_response = requests.get(url, headers=api_headers)
+    get_response = users_client.get_user_by_id(user_id)
     assert get_response.status_code == 200
     user_data = get_response.json()
     assert "name" in user_data, f"В ответе нет поля name: {user_data}"
@@ -22,17 +21,16 @@ def test_get_user(api_headers, create_user):
         "status"], f"status ожидали {create_user['status']}, получили {user_data['status']}"
 
 
-def test_patch_user(api_headers, create_user):
+def test_patch_user(users_client, create_user):
     user_id = create_user["id"]
-    url = f"{BASE_URL}/users/{user_id}"
     patch_payload = {"name": "Иван Измененный"}
-    patch_response = requests.patch(url,json = patch_payload, headers=api_headers)
+    patch_response = users_client.patch_user_by_id(user_id,patch_payload)
     assert patch_response.status_code == 200
     patch_data = patch_response.json()
     assert "name" in patch_data, f"В ответе нет поля name: {patch_data}"
     assert patch_data["name"] == patch_payload["name"], f"name ожидали {patch_payload['name']}, получили {patch_data['name']}"
 
-def test_create_user_without_token():
+def test_create_user_without_token(users_client):
     payload = {
         "name": "Иван",
         "gender": "male",
@@ -44,44 +42,40 @@ def test_create_user_without_token():
     assert post_response.status_code == 401
 
 
-def test_create_user_with_using_email(api_headers):
+def test_create_user_with_using_email(users_client):
     payload = {
         "name": "Иван",
         "gender": "male",
         "email": f"user_{int(time.time())}@test.com",
         "status": "active"
     }
-    url = f"{BASE_URL}/users"
-    post_response = requests.post(url, json=payload, headers=api_headers)
+    post_response = users_client.create_user(payload)
     user_id = post_response.json()["id"]
     assert post_response.status_code == 201
 
-    duplicate_email = requests.post(url, json=payload, headers=api_headers)
+    duplicate_email = users_client.create_user(payload)
     assert duplicate_email.status_code == 422
 
-    delete_url = f"{BASE_URL}/users/{user_id}"
-    delete_after_test = requests.delete(delete_url, headers=api_headers)
+    delete_after_test = users_client.delete_user_by_id(user_id)
     assert delete_after_test.status_code == 204
 
 
-def test_nonexistent_user(api_headers):
+def test_nonexistent_user(users_client):
     user_id = "fake"
-    get_url = f"{BASE_URL}/users/{user_id}"
-    get_response = requests.get(get_url, headers=api_headers)
+    get_response = users_client.get_user_by_id(user_id)
     assert get_response.status_code == 404
 
 
 @pytest.mark.parametrize("field, invalid_value", [("name", ""), ("gender", "unknown"),
 ("email", "not-an-email"), ("status", "deleted")])
-def test_create_user_invalid_data(api_headers,field, invalid_value):
+def test_create_user_invalid_data(users_client,field, invalid_value):
     payload = {
         "name": "Иван",
         "gender": "male",
         "email": f"user_{int(time.time())}@test.com",
         "status": "active",
         field: invalid_value}
-    url = f"{BASE_URL}/users"
-    post_response = requests.post(url, json=payload, headers=api_headers)
+    post_response = users_client.create_user(payload)
     assert post_response.status_code == 422
     errors = post_response.json()
     assert errors[0]["field"] == field, f"Ожидали ошибку по полю {field}, получили {errors}"

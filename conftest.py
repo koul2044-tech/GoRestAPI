@@ -3,6 +3,7 @@ import time
 import requests
 import pytest
 from dotenv import load_dotenv
+from api_clients import UsersClient
 
 
 load_dotenv()
@@ -37,3 +38,8 @@ def create_user(api_headers):
 
     delete_url = f"https://gorest.co.in/public/v2/users/{user_id}"
     requests.delete(delete_url, headers=api_headers)
+
+
+@pytest.fixture
+def users_client(api_headers):
+    return UsersClient(api_headers)
